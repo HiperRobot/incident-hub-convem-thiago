@@ -80,7 +80,7 @@ Velocidade de iteração, facilidade de execução local pelo avaliador e menos 
 
 ## Estratégia de IA
 
-- Utilizar IA (GitHubCopilot Chat / Claude) para gerar scaffolds, arquivos, codigos e correções pontuais.
+- Utilizar IA (GitHub Copilot Chat / Claude / Amazon Q Developer) para gerar scaffolds, arquivos, codigos e correções pontuais.
 - Fluxo iterativo: gerar → executar localmente → coletar logs/erros → pedir correções e aprimoramentos direcionados à IA.
 - Registrar interações relevantes em `AI_LOG.md` com objetivo/contexto/instrução/resultado/validação/decisão.
 - - Manter um histórico detalhado das interações com a IA para fins de auditoria e melhoria contínua em `AI_LOG.md`.

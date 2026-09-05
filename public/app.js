@@ -85,6 +85,24 @@ async function loadLastUpdated() {
   }
 }
 
+const detailMessageEl = document.getElementById('detailMessage');
+
+let detailMessageTimer = null;
+
+function setDetailMessage(text = '', type = '') {
+  clearTimeout(detailMessageTimer);
+  if (!text) {
+    detailMessageEl.className = 'message';
+    detailMessageEl.textContent = '';
+    return;
+  }
+  detailMessageEl.className = `message ${type}`;
+  detailMessageEl.textContent = text;
+  if (type === 'success' || type === 'info') {
+    detailMessageTimer = setTimeout(() => setDetailMessage(), 4000);
+  }
+}
+
 function setLoading(el, text = 'Carregando...') {
   el.innerHTML = `<div class="detail-empty">${text}</div>`;
 }
@@ -243,11 +261,11 @@ async function loadDetail(id) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: newStatus }),
         });
-        setMessage('Status atualizado com sucesso.', 'success');
+        setDetailMessage('Status atualizado com sucesso.', 'success');
         await loadDetail(id);
         await refreshList();
       } catch (e) {
-        setMessage(`Erro ao alterar status: ${e.message}`, 'error');
+        setDetailMessage(`Erro ao alterar status: ${e.message}`, 'error');
         sel.disabled = false;
       }
     });

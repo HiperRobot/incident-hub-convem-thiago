@@ -1,6 +1,6 @@
 # AI Log
 
-Ferramentas: GitHub Copilot Chat (gratuito), Claude (gratuito)
+Ferramentas: GitHub Copilot Chat (gratuito), Claude (gratuito), Amazon Q Developer (gratuito)
 
 Interações relevantes
 ### 1) Checkpoint 1 — `START.md` (commit inicial)
@@ -43,5 +43,19 @@ Interações relevantes
 ```bash
 git add .
 git commit -m "Checkpoint 3: UI refactor — dashboard tree, severity scale, dynamic badge, auto-save status"
+git push
+```
+
+### 4) Checkpoint 4 — Documentação final
+- Objetivo: garantir que todos os entregáveis obrigatórios do enunciado estão presentes e completos antes do code freeze.
+- Contexto: código e funcionalidades já finalizados; faltavam `FINAL_REPORT.md` e seções obrigatórias do `README.md`.
+- Instrução: gerar `FINAL_REPORT.md` com respostas objetivas às 15 perguntas do enunciado; reescrever `README.md` com as seções: Pré-requisitos, Instalação, Execução, Dados iniciais, Testes, Arquitetura e Limitações conhecidas; adicionar Amazon Q Developer em todas as referências de ferramentas de IA nos documentos.
+- Resultado: `FINAL_REPORT.md` criado com todas as 15 respostas; `README.md` reescrito com todas as seções exigidas incluindo endpoints da API, estrutura de pastas e limitações conhecidas; `AI_LOG.md` e `PLAN.md` atualizados para incluir Amazon Q Developer na lista de ferramentas.
+- Validação: checklist manual contra o enunciado confirmou cobertura de todos os entregáveis obrigatórios (README, START, PLAN, AI_LOG, FINAL_REPORT, código, testes).
+- Decisão: commitar checkpoint 4 e preparar para o vídeo final entre 17:40 e 18:00.
+
+```bash
+git add .
+git commit -m "Checkpoint 4: FINAL_REPORT.md + README completo + AI_LOG checkpoint 3"
 git push
 ```
