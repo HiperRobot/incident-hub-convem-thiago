@@ -4,38 +4,313 @@
     <meta charset="utf-8" />
     <title>Incident Hub</title>
     <style>
-      body{font-family:Arial,Helvetica,sans-serif;margin:20px}
-      .inc{border:1px solid #ddd;padding:8px;margin:6px}
-      label{display:block;margin-top:8px}
+      :root{
+        --bg: #f4f6fb;
+        --surface: rgba(255,255,255,.88);
+        --surface-strong: #fff;
+        --text: #172033;
+        --muted: #63708a;
+        --line: #d9e0ee;
+        --accent: #1d4ed8;
+        --accent-strong: #153fa9;
+        --ok: #0f766e;
+        --warn: #b45309;
+        --danger: #b91c1c;
+        --shadow: 0 16px 40px rgba(23, 32, 51, .12);
+      }
+
+      *{box-sizing:border-box}
+      body{
+        margin:0;
+        font-family:Inter,Segoe UI,Arial,sans-serif;
+        color:var(--text);
+        background: radial-gradient(circle at top left, #e8efff 0, transparent 35%), linear-gradient(180deg, #f8faff 0%, var(--bg) 100%);
+      }
+
+      .page{
+        max-width:1200px;
+        margin:0 auto;
+        padding:24px;
+      }
+
+      .hero{
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        gap:24px;
+        padding:24px;
+        border:1px solid var(--line);
+        border-radius:24px;
+        background:var(--surface);
+        box-shadow:var(--shadow);
+        backdrop-filter: blur(10px);
+      }
+
+      .hero h1{
+        margin:0 0 8px;
+        font-size:clamp(2rem, 4vw, 3.2rem);
+      }
+
+      .hero p{margin:0;color:var(--muted);max-width:720px;line-height:1.5}
+
+      .hero-badge{
+        padding:10px 14px;
+        border-radius:999px;
+        background:#e0ecff;
+        color:var(--accent-strong);
+        font-weight:700;
+        white-space:nowrap;
+      }
+
+      .layout{
+        display:grid;
+        grid-template-columns:minmax(320px, 390px) minmax(0, 1fr);
+        gap:24px;
+        margin-top:24px;
+      }
+
+      .card{
+        border:1px solid var(--line);
+        border-radius:20px;
+        background:var(--surface-strong);
+        box-shadow:var(--shadow);
+        padding:20px;
+      }
+
+      .card h2{margin:0 0 16px;font-size:1.25rem}
+
+      .status-bar{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+        margin:14px 0 0;
+      }
+
+      .tree{
+        margin:16px 0 0;
+        display:flex;
+        flex-direction:column;
+        gap:0;
+      }
+      .tree-root{
+        display:inline-flex;
+        align-items:center;
+        gap:10px;
+        padding:10px 16px;
+        border-radius:12px;
+        background:#e8efff;
+        border:1px solid #c5d5f5;
+        font-weight:800;
+        font-size:1rem;
+        width:fit-content;
+      }
+      .tree-root .tv{font-size:1.3rem;color:var(--accent)}
+      .tree-children{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+        margin:10px 0 0 20px;
+        padding-left:16px;
+        border-left:2px solid #c5d5f5;
+      }
+      .tree-branch{
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+      }
+      .tree-node{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding:8px 14px;
+        border-radius:10px;
+        border:1px solid var(--line);
+        background:#fff;
+        font-size:.92rem;
+        font-weight:700;
+      }
+      .tree-node .tv{font-size:1.1rem;font-weight:800}
+      .tree-node.open{border-color:#93b4f5;background:#f0f5ff;color:var(--accent-strong)}
+      .tree-node.open .tv{color:var(--accent)}
+      .tree-node.progress{border-color:#fcd38a;background:#fffbf0;color:var(--warn)}
+      .tree-node.progress .tv{color:var(--warn)}
+      .tree-node.resolved{border-color:#86efcf;background:#f0fdf8;color:var(--ok)}
+      .tree-node.resolved .tv{color:var(--ok)}
+      .tree-node.critical{border-color:#fca5a5;background:#fff5f5;color:var(--danger)}
+      .tree-node.critical .tv{color:var(--danger)}
+
+      form label{display:block;margin-top:12px;font-size:.95rem;font-weight:600}
+      input, textarea, select, button{
+        font:inherit;
+      }
+      input, textarea, select{
+        width:100%;
+        margin-top:8px;
+        padding:12px 14px;
+        border:1px solid var(--line);
+        border-radius:14px;
+        background:#fff;
+        color:var(--text);
+      }
+      textarea{min-height:110px;resize:vertical}
+
+      .button-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+      button{
+        border:none;
+        border-radius:12px;
+        padding:12px 16px;
+        cursor:pointer;
+        font-weight:700;
+      }
+      .primary{background:var(--accent);color:#fff}
+      .primary:hover{background:var(--accent-strong)}
+      .secondary{background:#edf2ff;color:var(--accent-strong)}
+      .secondary:hover{background:#dbe6ff}
+
+      .controls{
+        display:flex;
+        flex-wrap:wrap;
+        gap:12px;
+        align-items:end;
+        margin-bottom:16px;
+      }
+      .controls label{margin:0;min-width:170px;flex:1}
+
+      .message{
+        margin:14px 0 0;
+        padding:12px 14px;
+        border-radius:14px;
+        border:1px solid transparent;
+        display:none;
+      }
+      .message.info{display:block;background:#eef6ff;border-color:#cfe0ff;color:#174ea6}
+      .message.success{display:block;background:#eefaf1;border-color:#c7ebd1;color:#0f766e}
+      .message.error{display:block;background:#fff1f1;border-color:#ffd0d0;color:#b91c1c}
+
+      .list-meta{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;color:var(--muted)}
+      .incidents{display:grid;gap:12px}
+      .inc{
+        border:1px solid var(--line);
+        border-radius:16px;
+        padding:14px 16px;
+        background:#fff;
+        transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+      }
+      .inc.selected{border-color:var(--accent);box-shadow:0 0 0 3px rgba(29,78,216,.12);}
+      .inc-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+      .inc-title{font-size:1.02rem;font-weight:800;margin:0 0 8px}
+      .inc-meta{display:flex;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:.92rem}
+      .badge{
+        display:inline-flex;
+        align-items:center;
+        padding:4px 10px;
+        border-radius:999px;
+        background:#edf2ff;
+        color:var(--accent-strong);
+        font-size:.78rem;
+        font-weight:700;
+      }
+      .badge.ok{background:#e7f7f4;color:var(--ok)}
+      .badge.warn{background:#fff4e5;color:#78350f}
+      .badge.open{background:#f0f5ff;color:#153fa9}
+      .badge.danger{background:#ffeaea;color:var(--danger)}
+      .badge.sev-critical{background:#ffeaea;color:#b91c1c}
+      .badge.sev-high{background:#ffe4d6;color:#c2410c}
+      .badge.sev-medium{background:#fde8c8;color:#78716c}
+      .badge.sev-low{background:#e5e7eb;color:#6b7280}
+      .inc-actions{margin-top:12px;display:flex;justify-content:flex-end}
+
+      .detail-empty{
+        color:var(--muted);
+        line-height:1.5;
+        border:1px dashed var(--line);
+        border-radius:16px;
+        padding:18px;
+        background:#fbfcff;
+      }
+      .detail-header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+      .detail-title{margin:0;font-size:1.5rem}
+      .detail-grid{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:12px;margin:18px 0}
+      .detail-box{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fbfcff}
+      .detail-box .k{display:block;color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.04em}
+      .detail-box .v{display:block;margin-top:6px;font-weight:700}
+      .history{margin-top:18px}
+      .history-item{border-left:3px solid #cbd5e1;padding:8px 12px;margin:10px 0;background:#fafcff;border-radius:0 12px 12px 0}
+      .history-item span{display:block;color:var(--muted);font-size:.88rem;margin-top:3px}
+      .stack{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+      @media (max-width: 900px){
+        .layout{grid-template-columns:1fr}
+        .hero{flex-direction:column}
+      }
+
+      @media (max-width: 640px){
+        .page{padding:14px}
+        .card,.hero{padding:16px;border-radius:18px}
+        .detail-grid{grid-template-columns:1fr}
+      }
     </style>
   </head>
   <body>
-    <h1>Incident Hub</h1>
-    <section id="dashboard"></section>
+    <div class="page">
+      <header class="hero">
+        <div>
+          <h1>Incident Hub</h1>
+          <p>Seus incidentes operacionais centralizados com status, responsáveis e histórico em uma única visualização priorizada.</p>
+          <div class="status-bar" id="dashboard"></div>
+        </div>
+        <div class="hero-badge" id="lastUpdatedBadge">Banco atualizado</div>
+      </header>
 
-    <h2>Create Incident</h2>
-    <form id="createForm">
-      <label>Title<input name="title" required /></label>
-      <label>Description<textarea name="description" required></textarea></label>
-      <label>Severity
-        <select name="severity">
-          <option>Low</option>
-          <option>Medium</option>
-          <option>High</option>
-          <option>Critical</option>
-        </select>
-      </label>
-      <label>Owner<input name="owner" required /></label>
-      <button>Create</button>
-    </form>
+      <div id="message" class="message"></div>
 
-    <h2>Incidents</h2>
-    <label>Filter: <select id="filterStatus"><option value="">All</option><option>Open</option><option>In Progress</option><option>Resolved</option></select>
-    <select id="filterSeverity"><option value="">All</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select>
-    <button id="refresh">Refresh</button></label>
-    <div id="list"></div>
+      <main class="layout">
+        <section class="card">
+          <h2>Novo incidente</h2>
+          <form id="createForm">
+            <label>Título<input name="title" required placeholder="Ex.: API de pagamento instável" /></label>
+            <label>Descrição<textarea name="description" required placeholder="Explique o problema com contexto suficiente"></textarea></label>
+            <label>Severidade
+              <select name="severity">
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+                <option>Critical</option>
+              </select>
+            </label>
+            <label>Responsável<input name="owner" required placeholder="Nome da pessoa responsável" /></label>
+            <div class="button-row">
+              <button class="primary" type="submit">Criar incidente</button>
+            </div>
+          </form>
+        </section>
 
-    <div id="detail" style="margin-top:20px"></div>
+        <section class="card">
+          <h2>Incidentes</h2>
+          <div class="controls">
+            <label>Status
+              <select id="filterStatus"><option value="">Todos</option><option>Open</option><option>In Progress</option><option>Resolved</option></select>
+            </label>
+            <label>Severidade
+              <select id="filterSeverity"><option value="">Todas</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select>
+            </label>
+            <div class="button-row">
+              <button id="refresh" class="secondary" type="button">Ver todos</button>
+            </div>
+          </div>
+          <div class="list-meta">
+            <span id="listSummary">Carregando incidentes...</span>
+            <span id="listCount"></span>
+          </div>
+          <div id="list" class="incidents"></div>
+        </section>
+
+        <section class="card" style="grid-column:1 / -1">
+          <h2>Detalhe do incidente</h2>
+          <div id="detail" class="detail-empty">Selecione um incidente para ver os detalhes, o histórico e alterar o status.</div>
+        </section>
+      </main>
+    </div>
 
     <script src="/app.js"></script>
   </body>

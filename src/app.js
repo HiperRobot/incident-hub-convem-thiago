@@ -95,20 +95,37 @@ app.patch('/api/incidents/:id/status', (req, res) => {
   });
 });
 
+// Last updated
+app.get('/api/last-updated', (req, res) => {
+  db.get('SELECT MAX(updated_at) AS last_updated FROM incidents', (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ last_updated: row.last_updated || null });
+  });
+});
+
 // Dashboard counts
 app.get('/api/dashboard', (req, res) => {
   const counts = {};
   db.serialize(() => {
-    db.get('SELECT COUNT(*) AS open_count FROM incidents WHERE status = "Open"', (e1, r1) => {
-      if (e1) return res.status(500).json({ error: e1.message });
-      counts.open_count = r1.open_count;
-      db.get("SELECT COUNT(*) AS critical_unresolved FROM incidents WHERE severity = 'Critical' AND status != 'Resolved'", (e2, r2) => {
-        if (e2) return res.status(500).json({ error: e2.message });
-        counts.critical_unresolved = r2.critical_unresolved;
-        db.get("SELECT COUNT(*) AS resolved_count FROM incidents WHERE status = 'Resolved'", (e3, r3) => {
-          if (e3) return res.status(500).json({ error: e3.message });
-          counts.resolved_count = r3.resolved_count;
-          res.json(counts);
+    db.get('SELECT COUNT(*) AS total FROM incidents', (e0, r0) => {
+      if (e0) return res.status(500).json({ error: e0.message });
+      counts.total = r0.total;
+      db.all("SELECT status, COUNT(*) AS cnt FROM incidents WHERE severity = 'Critical' GROUP BY status", (e1, r1) => {
+        if (e1) return res.status(500).json({ error: e1.message });
+        counts.critical_by_status = {};
+        r1.forEach(row => { counts.critical_by_status[row.status] = row.cnt; });
+        db.get('SELECT COUNT(*) AS open_count FROM incidents WHERE status = "Open"', (e2, r2) => {
+          if (e2) return res.status(500).json({ error: e2.message });
+          counts.open_count = r2.open_count;
+          db.get("SELECT COUNT(*) AS in_progress_count FROM incidents WHERE status = 'In Progress'", (e3, r3) => {
+            if (e3) return res.status(500).json({ error: e3.message });
+            counts.in_progress_count = r3.in_progress_count;
+            db.get("SELECT COUNT(*) AS resolved_count FROM incidents WHERE status = 'Resolved'", (e4, r4) => {
+              if (e4) return res.status(500).json({ error: e4.message });
+              counts.resolved_count = r4.resolved_count;
+              res.json(counts);
+            });
+          });
         });
       });
     });

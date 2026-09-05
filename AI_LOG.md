@@ -25,3 +25,23 @@ Interações relevantes
 	```
 - Validação: o usuário prefere commitar manualmente; o log documenta a instrução e o estado atual para auditoria.
 - Decisão: manter o fluxo de commits manuais (pelo usuário) como checkpoints e continuar com a próxima etapa: rodar `npm install`, `npm run dadosIniciais`, `npm start` e `npm test` localmente; caso ocorram erros, o usuário colará os logs aqui para a IA iterar com patches.
+
+### 3) Checkpoint 3 — Refatoração de UI e melhorias de UX
+- Objetivo: melhorar a interface sem alterar a API nem a estrutura já definida — layout mais forte, interface mais intuitiva, interação mais fluida.
+- Contexto: `index.html` e `app.js` existentes; backend e testes já validados nos checkpoints anteriores.
+- Instrução: refatorar UI com cards, métricas, badges coloridos, tree view para dashboard, select de status com cores contextuais, botão "Ver todos" para resetar filtros, e highlight de card selecionado; manter compatibilidade com endpoints existentes.
+- Resultado: interface completamente reformulada com novo layout em grid, dashboard em árvore, escala de cores por severidade (cinza → laranja → vermelho) e por status (azul/amarelo/verde), badge dinâmico de "Banco atualizado há X min" via endpoint `/api/last-updated`, select de status com cor contextual e salvamento automático ao mudar, botão "Ver todos" para resetar filtros, e highlight de card selecionado.
+- Problemas encontrados e corrigidos:
+  - Função `setLoading` perdeu a declaração durante uma edição e quebrou o JS inteiro — identificado pelo usuário ao notar que as métricas sumiram; corrigido restaurando a declaração.
+  - Badge "Banco atualizado" ficava em "Carregando..." porque o endpoint retornava 404 — servidor precisava ser reiniciado para carregar o novo endpoint.
+  - `timeAgo` retornava `NaN dia(s)` — regex de normalização de data corrompeu string ISO que já era válida; corrigido removendo a normalização desnecessária.
+  - Template string do `loadDetail` ficou malformado após edição incremental — corrigido reescrevendo a função inteira de uma vez.
+  - Cores de severidade Medium e Low se confundiam com In Progress — resolvido iterativamente com o usuário até chegar na escala cinza → laranja-claro → laranja → vermelho.
+- Validação: usuário testou cada mudança no browser e confirmou visualmente; fetch manual no console confirmou o formato do payload de `/api/last-updated`.
+- Decisão: commitar checkpoint 3 com todas as melhorias de UI consolidadas antes de partir para documentação final (`FINAL_REPORT.md`).
+
+```bash
+git add .
+git commit -m "Checkpoint 3: UI refactor — dashboard tree, severity scale, dynamic badge, auto-save status"
+git push
+```
