@@ -1,0 +1,26 @@
+{
+  "name": "incident-hub",
+  "version": "0.1.0",
+  "description": "Incident Hub - minimal web app to manage incidents",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "dadosIniciais": "node src/dadosIniciais.js",
+    "listarDados": "node src/listarDados.js",
+    "test": "jest --runInBand"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "jest": "^29.6.1",
+    "supertest": "^7.2.2",
+    "nodemon": "^2.0.22"
+  }
+}

@@ -1,3 +1,3 @@
-Nome: Thiago
-Início: 08:00
-Ferramentas de IA iniciais: ChatGPT (gratuito), Claude (gratuito), GitHub Copilot Chat (gratuito)
+Nome: Thiago Henriques
+Início: 08:40
+Ferramentas de IA iniciais:  GitHub Copilot Chat (gratuito), Claude (gratuito)
