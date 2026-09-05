@@ -56,6 +56,30 @@ git push
 
 ```bash
 git add .
-git commit -m "Checkpoint 4: FINAL_REPORT.md + README completo + AI_LOG checkpoint 3"
+git commit -m "Checkpoint 4: FINAL_REPORT.md + README completo + AI_LOG checkpoint 4"
+git push
+```
+
+
+### 5) Checkpoint 5 — Change Request #1: Comentários + melhorias de UX na lista
+
+- Objetivo: adicionar sistema de comentários aos incidentes com timeline unificada (status + comentários em ordem cronológica) e melhorias visuais na lista.
+- Contexto: funcionalidades core já entregues; requisito novo de comentários adicionado após checkpoint 4.
+- Instrução: criar tabela `comments` no banco, endpoint `POST /api/incidents/:id/comments`, retornar `comments[]` no `GET /api/incidents/:id`, renderizar timeline unificada no detalhe com formulário de comentário.
+- Resultado:
+  - `src/db.js`: nova tabela `comments` (id, incident_id, author, content, created_at).
+  - `src/app.js`: `GET /api/incidents/:id` retorna `comments[]`; `POST /api/incidents/:id/comments` com validação de author/content; `GET /api/incidents` com LEFT JOIN para incluir `comment_count` por incidente.
+  - `public/app.js`: `loadDetail` reescrito com timeline unificada colapsável (colapsada por padrão quando > 3 eventos); contador de comentários ao lado do título do card na lista; `refreshList` chamado após novo comentário para atualizar o contador em tempo real.
+  - `tests/incidents.test.js`: 3 novos testes — comentário válido retorna 201, conteúdo vazio retorna 400, comentário aparece em `comments[]` no detalhe.
+- Problemas encontrados e corrigidos:
+  - `comment_count` não aparecia no card — servidor precisava ser reiniciado para carregar o LEFT JOIN.
+  - Contador não atualizava após novo comentário — `loadDetail` não chamava `refreshList`; corrigido com `Promise.all([loadDetail, refreshList])`.
+  - Timeline longa empurrava o formulário de comentário para fora da área visível — resolvido tornando a timeline colapsável com toggle de clique.
+- Validação: usuário testou no browser e confirmou contador, timeline colapsável e atualização em tempo real após novo comentário.
+- Decisão: commitar checkpoint 5 com todas as mudanças do Change Request #1.
+
+```bash
+git add .
+git commit -m "Checkpoint 5: comments system, collapsible timeline, comment count on cards"
 git push
 ```

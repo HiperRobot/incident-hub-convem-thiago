@@ -30,6 +30,17 @@ function init() {
         FOREIGN KEY(incident_id) REFERENCES incidents(id)
       )
     `);
+
+    db.run(`
+      CREATE TABLE IF NOT EXISTS comments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        incident_id INTEGER NOT NULL,
+        author TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(incident_id) REFERENCES incidents(id)
+      )
+    `);
   });
 }
 

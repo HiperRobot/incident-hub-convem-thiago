@@ -13,7 +13,39 @@ beforeAll(() => {
   app = require('../src/app');
 });
 
-test('Critical Open -> Resolved is rejected', async () => {
+test('adding a comment to an incident works', async () => {
+  const list = await request(app).get('/api/incidents');
+  const incident = list.body[0];
+  const res = await request(app)
+    .post(`/api/incidents/${incident.id}/comments`)
+    .send({ author: 'Ana', content: 'Provider contacted.' });
+  expect(res.status).toBe(201);
+  expect(res.body.author).toBe('Ana');
+  expect(res.body.content).toBe('Provider contacted.');
+});
+
+test('empty comment is rejected', async () => {
+  const list = await request(app).get('/api/incidents');
+  const incident = list.body[0];
+  const res = await request(app)
+    .post(`/api/incidents/${incident.id}/comments`)
+    .send({ author: 'Ana', content: '   ' });
+  expect(res.status).toBe(400);
+  expect(res.body.error).toMatch(/required/);
+});
+
+test('comment appears in incident timeline', async () => {
+  const list = await request(app).get('/api/incidents');
+  const incident = list.body[0];
+  await request(app)
+    .post(`/api/incidents/${incident.id}/comments`)
+    .send({ author: 'Bruno', content: 'Escalated to team.' });
+  const detail = await request(app).get(`/api/incidents/${incident.id}`);
+  expect(detail.body.comments.length).toBeGreaterThan(0);
+  expect(detail.body.comments.some(c => c.author === 'Bruno')).toBe(true);
+});
+
+, async () => {
   // Find a critical open incident
   const list = await request(app).get('/api/incidents');
   const critical = list.body.find(i=>i.severity==='Critical' && i.status==='Open');

@@ -173,11 +173,12 @@ async function loadList() {
       el.innerHTML = `
         <div class="inc-head">
           <div>
-            <p class="inc-title">${escapeHtml(incident.title)}</p>
+            <p class="inc-title">${escapeHtml(incident.title)}${incident.comment_count > 0 ? ` <span style="font-size:.8rem;font-weight:400;color:#6b7280">${incident.comment_count} comment${incident.comment_count > 1 ? 's' : ''}</span>` : ''}</p>
             <div class="inc-meta">
               <span class="badge ${severityClass(incident.severity)}">${escapeHtml(incident.severity)}</span>
               <span class="badge ${statusClass(incident.status)}">${escapeHtml(incident.status)}</span>
               <span>${escapeHtml(incident.owner)}</span>
+
             </div>
           </div>
           <div class="stack">
@@ -212,6 +213,19 @@ async function loadDetail(id) {
       'Resolved': 'border-width:2px;font-weight:700;border-color:#86efcf;background:#f0fdf8;color:#0f766e',
     };
     const selStyle = statusColors[incident.status] || 'border-width:2px;font-weight:700';
+
+    const events = [
+      ...(incident.history || []).map(h => ({ type: 'status', time: h.changed_at, data: h })),
+      ...(incident.comments || []).map(c => ({ type: 'comment', time: c.created_at, data: c }))
+    ].sort((a, b) => a.time.localeCompare(b.time));
+
+    const timelineHtml = events.length
+      ? events.map(ev => ev.type === 'status'
+          ? `<div class="history-item"><strong>Status changed: ${escapeHtml(ev.data.previous_status)} &rarr; ${escapeHtml(ev.data.new_status)}</strong><span>${formatDateTime(ev.time)}</span></div>`
+          : `<div class="history-item" style="border-left-color:#93b4f5"><strong>${escapeHtml(ev.data.author)} commented:</strong> &ldquo;${escapeHtml(ev.data.content)}&rdquo;<span>${formatDateTime(ev.time)}</span></div>`
+        ).join('')
+      : '<div class="detail-empty">Nenhuma atividade ainda.</div>';
+
     detailEl.innerHTML = `
       <div class="detail-header">
         <div>
@@ -225,7 +239,7 @@ async function loadDetail(id) {
       </div>
 
       <div class="detail-grid">
-        <div class="detail-box" style="grid-column:1/-1"><span class="k">Descrição</span><span class="v">${escapeHtml(incident.description)}</span></div>
+        <div class="detail-box" style="grid-column:1/-1"><span class="k">Descri&ccedil;&atilde;o</span><span class="v">${escapeHtml(incident.description)}</span></div>
         <div class="detail-box"><span class="k">Criado em</span><span class="v">${formatDateTime(incident.created_at)}</span></div>
         <div class="detail-box"><span class="k">Atualizado em</span><span class="v">${formatDateTime(incident.updated_at)}</span></div>
       </div>
@@ -239,17 +253,27 @@ async function loadDetail(id) {
       </div>
 
       <div class="history">
-        <h4 style="margin:18px 0 8px">Histórico de status</h4>
-        ${incident.history && incident.history.length
-          ? incident.history.map((item) => `
-            <div class="history-item">
-              <strong>${escapeHtml(item.previous_status)} → ${escapeHtml(item.new_status)}</strong>
-              <span>${formatDateTime(item.changed_at)}</span>
-            </div>
-          `).join('')
-          : '<div class="detail-empty">Nenhuma alteração de status ainda.</div>'}
+        <h4 id="timelineToggle" style="margin:18px 0 8px;cursor:pointer;user-select:none">Timeline <span id="timelineChevron">${events.length > 3 ? '▶' : '▼'}</span> <span style="font-size:.8rem;font-weight:400;color:#6b7280">${events.length} evento(s)</span></h4>
+        <div id="timelineBody" style="display:${events.length > 3 ? 'none' : 'block'}">${timelineHtml}</div>
+      </div>
+
+      <div style="margin-top:18px">
+        <h4 style="margin:0 0 8px">Adicionar coment&aacute;rio</h4>
+        <label style="font-size:.95rem;font-weight:600;display:block">Autor<input id="commentAuthor" placeholder="Seu nome" /></label>
+        <label style="font-size:.95rem;font-weight:600;display:block;margin-top:8px">Coment&aacute;rio<textarea id="commentContent" style="min-height:70px" placeholder="Descreva a atualiza&ccedil;&atilde;o..."></textarea></label>
+        <div class="button-row">
+          <button id="submitComment" class="primary" type="button">Comentar</button>
+        </div>
       </div>
     `;
+
+    document.getElementById('timelineToggle').addEventListener('click', () => {
+      const body = document.getElementById('timelineBody');
+      const chevron = document.getElementById('timelineChevron');
+      const open = body.style.display !== 'none';
+      body.style.display = open ? 'none' : 'block';
+      chevron.textContent = open ? '▶' : '▼';
+    });
 
     document.getElementById('statusSelector').addEventListener('change', async (e) => {
       const sel = e.target;
@@ -267,6 +291,31 @@ async function loadDetail(id) {
       } catch (e) {
         setDetailMessage(`Erro ao alterar status: ${e.message}`, 'error');
         sel.disabled = false;
+      }
+    });
+
+    document.getElementById('submitComment').addEventListener('click', async () => {
+      const btn = document.getElementById('submitComment');
+      const author = document.getElementById('commentAuthor').value.trim();
+      const content = document.getElementById('commentContent').value.trim();
+      if (!author || !content) {
+        setDetailMessage('Autor e comentário são obrigatórios.', 'error');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+      try {
+        await fetchJSON('/api/incidents/' + id + '/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ author, content }),
+        });
+        setDetailMessage('Comentário adicionado.', 'success');
+        await Promise.all([loadDetail(id), refreshList()]);
+      } catch (e) {
+        setDetailMessage(`Erro ao comentar: ${e.message}`, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Comentar';
       }
     });
   } catch (e) {

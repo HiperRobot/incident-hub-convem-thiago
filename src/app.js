@@ -15,19 +15,19 @@ const VALID_SEVERITIES = ['Low', 'Medium', 'High', 'Critical'];
 // List incidents with optional filtering
 app.get('/api/incidents', (req, res) => {
   const { status, severity } = req.query;
-  let sql = 'SELECT * FROM incidents';
+  let sql = 'SELECT incidents.*, COUNT(comments.id) AS comment_count FROM incidents LEFT JOIN comments ON comments.incident_id = incidents.id';
   const clauses = [];
   const params = [];
   if (status) {
-    clauses.push('status = ?');
+    clauses.push('incidents.status = ?');
     params.push(status);
   }
   if (severity) {
-    clauses.push('severity = ?');
+    clauses.push('incidents.severity = ?');
     params.push(severity);
   }
   if (clauses.length) sql += ' WHERE ' + clauses.join(' AND ');
-  sql += ' ORDER BY created_at DESC';
+  sql += ' GROUP BY incidents.id ORDER BY incidents.created_at DESC';
 
   db.all(sql, params, (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -54,7 +54,7 @@ app.post('/api/incidents', (req, res) => {
   });
 });
 
-// Get incident details + history
+// Get incident details + history + comments
 app.get('/api/incidents/:id', (req, res) => {
   const id = req.params.id;
   db.get('SELECT * FROM incidents WHERE id = ?', [id], (err, incident) => {
@@ -62,8 +62,30 @@ app.get('/api/incidents/:id', (req, res) => {
     if (!incident) return res.status(404).json({ error: 'incident not found' });
     db.all('SELECT previous_status, new_status, changed_at FROM status_history WHERE incident_id = ? ORDER BY changed_at ASC', [id], (err2, history) => {
       if (err2) return res.status(500).json({ error: err2.message });
-      incident.history = history;
-      res.json(incident);
+      db.all('SELECT id, author, content, created_at FROM comments WHERE incident_id = ? ORDER BY created_at ASC', [id], (err3, comments) => {
+        if (err3) return res.status(500).json({ error: err3.message });
+        incident.history = history;
+        incident.comments = comments;
+        res.json(incident);
+      });
+    });
+  });
+});
+
+// Add comment
+app.post('/api/incidents/:id/comments', (req, res) => {
+  const id = req.params.id;
+  const { author, content } = req.body;
+  if (!author || !author.trim() || !content || !content.trim()) {
+    return res.status(400).json({ error: 'author and content are required' });
+  }
+  db.get('SELECT id FROM incidents WHERE id = ?', [id], (err, incident) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!incident) return res.status(404).json({ error: 'incident not found' });
+    const now = new Date().toISOString();
+    db.run('INSERT INTO comments (incident_id, author, content, created_at) VALUES (?,?,?,?)', [id, author.trim(), content.trim(), now], function (err2) {
+      if (err2) return res.status(500).json({ error: err2.message });
+      res.status(201).json({ id: this.lastID, incident_id: Number(id), author: author.trim(), content: content.trim(), created_at: now });
     });
   });
 });
